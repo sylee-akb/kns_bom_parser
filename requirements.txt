@@ -1,6 +1,5 @@
 streamlit
 xlsxwriter
 pandas
-warnings
 datetime
 numpy
