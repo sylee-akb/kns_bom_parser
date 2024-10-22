@@ -5,7 +5,7 @@ warnings.simplefilter(action='ignore')
 import pandas as pd
 from datetime import datetime,timezone
 import numpy as np
-from natsort import index_natsorted #for version sorting of hierarchical numbers
+# from natsort import index_natsorted #for version sorting of hierarchical numbers
 
 
 st.title("KNS BOM Parser")
