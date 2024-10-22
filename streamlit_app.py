@@ -160,6 +160,6 @@ def output_bom():
 
 st.session_state.bom_file = st.file_uploader('Drop source KNS BOM here.', type='xlsx', accept_multiple_files=False, key='source_bom_upload', label_visibility="visible")
 st.button("Parse BOM", on_click=parse_bom)
-st.button("Output BOM", on_click=output_bom)
+# st.button("Output BOM", on_click=output_bom)
 # st.download_button('Download BOM', st.session_state.output_bom_file, file_name='output_bom.txt')
 st.dataframe(data=st.session_state.bom_df)
