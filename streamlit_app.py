@@ -10,6 +10,7 @@ import numpy as np
 
 st.title("KNS BOM Parser")
 
+
 if 'bom_df' not in st.session_state:
     st.session_state.bom_df = None
 
@@ -163,3 +164,16 @@ st.button("Parse BOM", on_click=parse_bom)
 # st.button("Output BOM", on_click=output_bom)
 # st.download_button('Download BOM', st.session_state.output_bom_file, file_name='output_bom.txt')
 st.dataframe(data=st.session_state.bom_df)
+
+
+st.markdown('''## To-do: 
+- Download as XLSX (instead of CSV)
+- Convert KNS UOM to AKB UOM
+- Search BC item master using description 1, and autofill sys num
+- Match expendables items and assign service number
+- Flag lines with inconsistent UOM for manual attention
+- Highlight lines needing attention
+    - Unable to identify what item category
+- Function to extract sub-BOM for specific items
+- Interface to manually enter list + price for KNS quoted AVL parts (e.g. Pecko, Hisaka), and update parsed BOM accordingly
+            ''')
