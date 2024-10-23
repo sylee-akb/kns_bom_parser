@@ -10,7 +10,6 @@ import numpy as np
 
 st.title("KNS BOM Parser")
 
-
 if 'bom_df' not in st.session_state:
     st.session_state.bom_df = None
 
@@ -26,7 +25,7 @@ if 'output_bom_file' not in st.session_state:
 def parse_oracle_bom(bom_file_obj):
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=UserWarning)
-        bom_df = pd.read_excel(bom_file_obj,sheet_name=0,engine="openpyxl",skiprows=0,usecols='A:U',converters={
+        bom_df = pd.read_excel(bom_file_obj,sheet_name=0,engine="openpyxl",skiprows=0,usecols=[*range(0, 20, 1)] ,converters={
             'BOM_LEVEL':str,
             'ITEM':str,
             'MANUFACTURING_ITEM':str,
@@ -43,7 +42,6 @@ def parse_oracle_bom(bom_file_obj):
     bom_df.loc[bom_df['BOM_LEVEL']=='TOP MODEL : ', 'Obsolete'] = 'N'
     bom_df.loc[bom_df['BOM_LEVEL']=='TOP MODEL : ', 'QTY'] = 1.0
     bom_df.loc[bom_df['BOM_LEVEL']=='TOP MODEL : ', 'UOM'] = 'PCS'
-    bom_df.loc[bom_df['BOM_LEVEL']=='TOP MODEL : ', 'MANUFACTURER_NAME'] = 'AKRIBIS ASSY'
     bom_df.loc[bom_df['BOM_LEVEL']=='TOP MODEL : ', 'Parent'] = 'None'
 
     # Populate hierarchical number
@@ -62,6 +60,7 @@ def parse_oracle_bom(bom_file_obj):
 
     # Assign best-guess manufacturer
     bom_df.loc[~bom_df['MANUFACTURER_NAME'].isna(),'Manufacturer'] = bom_df.loc[~bom_df['MANUFACTURER_NAME'].isna(),'MANUFACTURER_NAME']
+    bom_df.loc[bom_df['MANUFACTURER_NAME'].isna() & bom_df['BOM_LEVEL']=='TOP MODEL : ','Manufacturer'] = 'AKRIBIS ASSY'
     bom_df.loc[bom_df['MANUFACTURER_NAME'].isna() & bom_df['ITEM_DESCRIPTION'].str.startswith('ASSY') ,'Manufacturer'] = 'AKRIBIS ASSY'
     bom_df.loc[bom_df['MANUFACTURER_NAME'].isna() & bom_df['ITEM_DESCRIPTION'].str.contains('CABLE COMPLEMENT') ,'Manufacturer'] = 'AKRIBIS ASSY'
     bom_df.loc[bom_df['MANUFACTURER_NAME'].isna() & bom_df['ITEM_DESCRIPTION'].str.startswith('CBL_') ,'Manufacturer'] = 'AKRIBIS CABLING'
