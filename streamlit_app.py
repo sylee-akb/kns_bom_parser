@@ -9,12 +9,14 @@ import numpy as np
 
 
 st.title("KNS BOM Parser")
+if 'session_state' not in st.session_state:
+    st.session_state.upload_state = 'Pending file upload'
 
 if 'bom_df' not in st.session_state:
     st.session_state.bom_df = None
 
-if 'bom_file' not in st.session_state:
-    st.session_state.bom_file = None
+# if 'bom_file' not in st.session_state:
+#     st.session_state.bom_file = None
 
 if 'output_bom_df' not in st.session_state:
     st.session_state.output_bom_df = None
@@ -60,7 +62,7 @@ def parse_oracle_bom(bom_file_obj):
 
     # Assign best-guess manufacturer
     bom_df.loc[~bom_df['MANUFACTURER_NAME'].isna(),'Manufacturer'] = bom_df.loc[~bom_df['MANUFACTURER_NAME'].isna(),'MANUFACTURER_NAME']
-    bom_df.loc[bom_df['MANUFACTURER_NAME'].isna() & bom_df['BOM_LEVEL']=='TOP MODEL : ','Manufacturer'] = 'AKRIBIS ASSY'
+    bom_df.loc[bom_df['BOM_LEVEL']=='TOP MODEL : ','Manufacturer'] = 'AKRIBIS ASSY'
     bom_df.loc[bom_df['MANUFACTURER_NAME'].isna() & bom_df['ITEM_DESCRIPTION'].str.startswith('ASSY') ,'Manufacturer'] = 'AKRIBIS ASSY'
     bom_df.loc[bom_df['MANUFACTURER_NAME'].isna() & bom_df['ITEM_DESCRIPTION'].str.contains('CABLE COMPLEMENT') ,'Manufacturer'] = 'AKRIBIS ASSY'
     bom_df.loc[bom_df['MANUFACTURER_NAME'].isna() & bom_df['ITEM_DESCRIPTION'].str.startswith('CBL_') ,'Manufacturer'] = 'AKRIBIS CABLING'
@@ -77,6 +79,16 @@ def parse_oracle_bom(bom_file_obj):
     bom_df.loc[bom_df['System No.'].isna() & (bom_df['ITEM_DESCRIPTION'].str.startswith('SCREW')),'System No.'] = 'MEPFSC'
     bom_df.loc[bom_df['System No.'].isna() & (bom_df['ITEM_DESCRIPTION'].str.startswith('WASHER')),'System No.'] = 'MEPFSC'
     
+    # Convert UOM
+    bom_df['UOM'] = bom_df['UOM'].str.upper()
+    bom_df.loc[bom_df['UOM'] == 'EACH','UOM'] = 'PCS'
+    bom_df.loc[bom_df['UOM'] == 'MILLIMETER','UOM'] = 'MM'
+    bom_df.loc[bom_df['UOM'] == 'FEET','QTY'] = (bom_df.loc[bom_df['UOM'] == 'FEET','QTY'] * 304.8).apply(lambda f: np.round(f,decimals=2))
+    bom_df.loc[bom_df['UOM'] == 'FEET','UOM'] = 'MM'
+    bom_df.loc[bom_df['UOM'] == 'INCHES','QTY'] = (bom_df.loc[bom_df['UOM'] == 'INCHES','QTY'] * 25.4).apply(lambda f: np.round(f,decimals=2))
+    bom_df.loc[bom_df['UOM'] == 'INCHES','UOM'] = 'MM'
+    
+    # Rename column headers
     bom_df['Description 2\n(Description / Dwg Title)'] = bom_df['ITEM_DESCRIPTION']
     bom_df['Qty'] = bom_df['QTY']
 
@@ -136,9 +148,10 @@ def populate_hier_num(bom_df,i):
 
 def parse_bom():
     if st.session_state.bom_file is None:
-        st.session_state["upload_state"] = "Upload a file first!"
+        st.session_state.upload_state = "Upload a file first!"
     else:
         st.session_state.bom_df = parse_oracle_bom(st.session_state.bom_file)
+        st.session_state.upload_state = "BOM parsed successfully!"
 
 def output_bom():
     if st.session_state.bom_df is None:
@@ -158,21 +171,22 @@ def output_bom():
             (max_row, max_col) = st.session_state.bom_df.shape
             writer.sheets['System BOM'].autofilter(0, 0, max_row, max_col)
 
-st.session_state.bom_file = st.file_uploader('Drop source KNS BOM here.', type='xlsx', accept_multiple_files=False, key='source_bom_upload', label_visibility="visible")
-st.button("Parse BOM", on_click=parse_bom)
-# st.button("Output BOM", on_click=output_bom)
-# st.download_button('Download BOM', st.session_state.output_bom_file, file_name='output_bom.txt')
-st.dataframe(data=st.session_state.bom_df)
+st.file_uploader('Upload source BOM:', key = 'bom_file',type='xlsx', accept_multiple_files=False, on_change = parse_bom,label_visibility="visible")
+
+
+if type(st.session_state.bom_df) == pd.core.frame.DataFrame:
+    st.dataframe(data=st.session_state.bom_df.style.highlight_null(color='pink',subset=['System No.','Manufacturer']))
 
 
 st.markdown('''## To-do: 
 - Download as XLSX (instead of CSV)
-- Convert KNS UOM to AKB UOM
+- ~~Convert KNS UOM to AKB UOM~~
 - Search BC item master using description 1, and autofill sys num
 - Match expendables items and assign service number
 - Flag lines with inconsistent UOM for manual attention
 - Highlight lines needing attention
-    - Unable to identify what item category
+    - ~~Unable to identify what item category~~
+    - ~~Unable to identify correct manufacturer~~
 - Function to extract sub-BOM for specific items
 - Interface to manually enter list + price for KNS quoted AVL parts (e.g. Pecko, Hisaka), and update parsed BOM accordingly
             ''')
