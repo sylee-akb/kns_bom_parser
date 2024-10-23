@@ -25,7 +25,7 @@ if 'output_bom_file' not in st.session_state:
 def parse_oracle_bom(bom_file_obj):
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=UserWarning)
-        bom_df = pd.read_excel(bom_file_obj,sheet_name='K___S_BOM_Explosion_Program_170',engine="openpyxl",skiprows=0,usecols='A:U',converters={
+        bom_df = pd.read_excel(bom_file_obj,sheet_name=0,engine="openpyxl",skiprows=0,usecols='A:U',converters={
             'BOM_LEVEL':str,
             'ITEM':str,
             'MANUFACTURING_ITEM':str,
